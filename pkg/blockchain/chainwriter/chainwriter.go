@@ -6,6 +6,8 @@ import (
 	"Chain/pkg/pro"
 	"Chain/pkg/utils"
 	"google.golang.org/protobuf/proto"
+	"log"
+	"os"
 )
 
 // ChainWriter handles all I/O for the BlockChain. It stores and retrieves
@@ -37,6 +39,9 @@ type ChainWriter struct {
 
 // New returns a ChainWriter given a Config.
 func New(config *Config) *ChainWriter {
+	if err := os.MkdirAll(config.DataDirectory, 0700); err != nil {
+		log.Fatalf("Could not create ChainWriter's data directory")
+	}
 	return &ChainWriter{
 		FileExtension:          config.FileExtension,
 		DataDirectory:          config.DataDirectory,

@@ -34,7 +34,7 @@ type BlockChain struct {
 // New returns a blockchain given a Config.
 func New(config *Config) *BlockChain {
 	genBlock := GenesisBlock(config)
-	hash := utils.Hash(genBlock)
+	hash := genBlock.Hash()
 	bc := &BlockChain{
 		Length:       1,
 		LastBlock:    genBlock,
@@ -159,7 +159,7 @@ func (bc *BlockChain) GetBlocks(start, end uint32) []*block.Block {
 
 	var blocks []*block.Block
 	currentHeight := bc.Length
-	nextHash := utils.Hash(bc.LastBlock)
+	nextHash := bc.LastBlock.Hash()
 
 	for currentHeight >= start {
 		br := bc.BlockInfoDB.GetBlockRecord(nextHash)
@@ -188,7 +188,7 @@ func (bc *BlockChain) GetHashes(start, end uint32) []string {
 
 	var hashes []string
 	currentHeight := bc.Length
-	nextHash := utils.Hash(bc.LastBlock)
+	nextHash := bc.LastBlock.Hash()
 
 	for currentHeight >= start {
 		br := bc.BlockInfoDB.GetBlockRecord(nextHash)
@@ -204,7 +204,7 @@ func (bc *BlockChain) GetHashes(start, end uint32) []string {
 // appendsToActiveChain returns whether a Block appends to the
 // BlockChain's active chain or not.
 func (bc *BlockChain) appendsToActiveChain(b *block.Block) bool {
-	return utils.Hash(bc.LastBlock) == b.Header.PreviousHash
+	return bc.LastBlock.Hash() == b.Header.PreviousHash
 }
 
 // getForkedBlocks returns a slice of Blocks given a starting hash.

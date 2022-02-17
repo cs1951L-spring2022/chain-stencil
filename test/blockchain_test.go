@@ -36,8 +36,8 @@ func TestHandleAppendingBlock(t *testing.T) {
 	if bc.Length != 2 {
 		t.Errorf("Expected chain length: %v\n Actual chain length: %v", 2, bc.Length)
 	}
-	if bc.LastHash != utils.Hash(newBlock) {
-		t.Errorf("Expected last hash: %v\nActual last hash: %v", utils.Hash(newBlock), bc.LastHash)
+	if bc.LastHash != newBlock.Hash() {
+		t.Errorf("Expected last hash: %v\nActual last hash: %v", newBlock.Hash(), bc.LastHash)
 	}
 	if bc.LastBlock != newBlock {
 		t.Errorf("Expected block: %v\n Actual block: %v", newBlock, bc.LastBlock)
@@ -53,7 +53,8 @@ func TestHandleForkingBlock(t *testing.T) {
 	for i := 0; i < 4; i++ {
 		newBlock := MakeBlockFromPrev(currBlock)
 		newForkingBlock := MakeBlockFromPrev(currForkingBlock)
-		if utils.Hash(newBlock) == utils.Hash(newForkingBlock) {
+		newForkingBlock.Header.Version = 2
+		if newBlock.Hash() == newForkingBlock.Hash() {
 			t.Errorf("Hashes should not be the same")
 		}
 		if i < 3 {
@@ -66,8 +67,8 @@ func TestHandleForkingBlock(t *testing.T) {
 	if bc.Length != 5 {
 		t.Errorf("Expected chain length: %v\n Actual chain length: %v", 5, bc.Length)
 	}
-	if bc.LastHash != utils.Hash(currForkingBlock) {
-		t.Errorf("Expected last hash: %v\nActual last hash: %v", utils.Hash(currForkingBlock), bc.LastHash)
+	if bc.LastHash != currForkingBlock.Hash() {
+		t.Errorf("Expected last hash: %v\nActual last hash: %v", currForkingBlock.Hash(), bc.LastHash)
 	}
 	if bc.LastBlock != currForkingBlock {
 		t.Errorf("Expected block: %v\n Actual block: %v", currForkingBlock, bc.LastBlock)
@@ -84,8 +85,8 @@ func TestHandleInvalidBlock(t *testing.T) {
 	if bc.Length != 1 {
 		t.Errorf("Expected chain length: %v\n Actual chain length: %v", 1, bc.Length)
 	}
-	if bc.LastHash != utils.Hash(lastBlock) {
-		t.Errorf("Expected last hash: %v\nActual last hash: %v", utils.Hash(lastBlock), bc.LastHash)
+	if bc.LastHash != lastBlock.Hash() {
+		t.Errorf("Expected last hash: %v\nActual last hash: %v", lastBlock.Hash(), bc.LastHash)
 	}
 	if bc.LastBlock != lastBlock {
 		t.Errorf("Expected block: %v\n Actual block: %v", lastBlock, bc.LastBlock)
@@ -105,8 +106,8 @@ func TestHandle50Blocks(t *testing.T) {
 	if bc.Length != 51 {
 		t.Errorf("Expected chain length: %v\n Actual chain length: %v", 51, bc.Length)
 	}
-	if bc.LastHash != utils.Hash(currBlock) {
-		t.Errorf("Expected last hash: %v\nActual last hash: %v", utils.Hash(currBlock), bc.LastHash)
+	if bc.LastHash != currBlock.Hash() {
+		t.Errorf("Expected last hash: %v\nActual last hash: %v", currBlock.Hash(), bc.LastHash)
 	}
 	if bc.LastBlock != currBlock {
 		t.Errorf("Expected block: %v\n Actual block: %v", currBlock, bc.LastBlock)
@@ -122,7 +123,8 @@ func TestHandle2Forks(t *testing.T) {
 	for i := 0; i < 3; i++ {
 		newBlock := MakeBlockFromPrev(currBlock)
 		newForkingBlock := MakeBlockFromPrev(currForkingBlock)
-		if utils.Hash(newBlock) == utils.Hash(newForkingBlock) {
+		newForkingBlock.Header.Version = 2
+		if newBlock.Hash() == newForkingBlock.Hash() {
 			t.Errorf("Hashes should not be the same")
 		}
 		if i != 1 {
@@ -138,8 +140,8 @@ func TestHandle2Forks(t *testing.T) {
 	if bc.Length != 4 {
 		t.Errorf("Expected chain length: %v\n Actual chain length: %v", 4, bc.Length)
 	}
-	if bc.LastHash != utils.Hash(currBlock) {
-		t.Errorf("Expected last hash: %v\nActual last hash: %v", utils.Hash(currBlock), bc.LastHash)
+	if bc.LastHash != currBlock.Hash() {
+		t.Errorf("Expected last hash: %v\nActual last hash: %v", currBlock.Hash(), bc.LastHash)
 	}
 	if bc.LastBlock != currBlock {
 		t.Errorf("Expected block: %v\n Actual block: %v", currBlock, bc.LastBlock)

@@ -11,7 +11,6 @@ import "Chain/pkg/block"
 type Coin struct {
 	TransactionOutput *block.TransactionOutput
 	IsSpent           bool
-	Active            bool
 }
 
 // CoinLocator is a dumbed down TransactionInput, used

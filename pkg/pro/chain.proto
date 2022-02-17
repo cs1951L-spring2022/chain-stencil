@@ -50,7 +50,6 @@ message BlockRecord {
 
 message CoinRecord {
   uint32 version = 1;
-  bool active = 2;
   repeated uint32 output_indexes = 3;
   repeated uint32 amounts = 4;
   repeated string locking_scripts = 5;

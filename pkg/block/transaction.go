@@ -1,6 +1,11 @@
 package block
 
-import "Chain/pkg/pro"
+import (
+	"Chain/pkg/pro"
+	"crypto/sha256"
+	"fmt"
+	"google.golang.org/protobuf/proto"
+)
 
 // TransactionInput is used as the input to create a TransactionOutput.
 // Recall that TransactionInputs generate TransactionOutputs which in turn
@@ -108,4 +113,16 @@ func DecodeTransaction(ptx *pro.Transaction) *Transaction {
 		Outputs:  txos,
 		LockTime: ptx.GetLockTime(),
 	}
+}
+
+// Hash returns the hash of the transaction
+func (tx *Transaction) Hash() string {
+	h := sha256.New()
+	pt := EncodeTransaction(tx)
+	bytes, err := proto.Marshal(pt)
+	if err != nil {
+		fmt.Errorf("[tx.Hash()] Unable to marshal transaction")
+	}
+	h.Write(bytes)
+	return fmt.Sprintf("%x", h.Sum(nil))
 }

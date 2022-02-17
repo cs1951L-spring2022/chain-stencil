@@ -4,7 +4,6 @@ import (
 	"Chain/pkg/block"
 	"Chain/pkg/blockchain/blockinfodatabase"
 	"Chain/pkg/blockchain/chainwriter"
-	"Chain/pkg/utils"
 	"fmt"
 	"os"
 )
@@ -146,7 +145,7 @@ func GenesisBlock() *block.Block {
 func MakeBlockFromPrev(b *block.Block) *block.Block {
 	newHeader := &block.Header{
 		Version:          0,
-		PreviousHash:     utils.Hash(b),
+		PreviousHash:     b.Hash(),
 		MerkleRoot:       "",
 		DifficultyTarget: "",
 		Nonce:            0,
@@ -156,7 +155,7 @@ func MakeBlockFromPrev(b *block.Block) *block.Block {
 	var transactions []*block.Transaction
 
 	for _, tx := range b.Transactions {
-		txHash := utils.Hash(tx)
+		txHash := tx.Hash()
 		for i, txo := range tx.Outputs {
 			txi := &block.TransactionInput{
 				ReferenceTransactionHash: txHash,

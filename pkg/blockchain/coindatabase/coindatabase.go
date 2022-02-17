@@ -49,14 +49,14 @@ func (coinDB *CoinDatabase) ValidateBlock(transactions []*block.Transaction) boo
 }
 
 // validateTransaction checks whether a Transaction's inputs are valid Coins.
-// If the Coins have already been spent, are not a part of the active chain,
-// or do not exist, validateTransaction returns an error.
+// If the Coins have already been spent or do not exist, validateTransaction
+// returns an error.
 func (coinDB *CoinDatabase) validateTransaction(transaction *block.Transaction) error {
 	for _, txi := range transaction.Inputs {
 		key := makeCoinLocator(txi)
 		if coin, ok := coinDB.mainCache[key]; ok {
-			if !coin.Active {
-				return fmt.Errorf("[validateTransaction] coin was not active")
+			if coin.IsSpent {
+				return fmt.Errorf("[validateTransaction] coin already spent")
 			}
 			continue
 		}
@@ -74,15 +74,6 @@ func (coinDB *CoinDatabase) validateTransaction(transaction *block.Transaction) 
 		}
 	}
 	return nil
-}
-
-// ValidateAndStoreBlock combines the coin database's ValidateBlock and StoreBlock calls.
-func (coinDB *CoinDatabase) ValidateAndStoreBlock(transactions []*block.Transaction) bool {
-	if !coinDB.ValidateBlock(transactions) {
-		return false
-	}
-	coinDB.StoreBlock(transactions, true)
-	return true
 }
 
 // UndoCoins handles reverting a Block. It:
@@ -106,16 +97,31 @@ func (coinDB *CoinDatabase) FlushMainCache() {
 	// update coin records
 	updatedCoinRecords := make(map[string]*CoinRecord)
 	for cl := range coinDB.mainCache {
-		if data, err := coinDB.db.Get([]byte(cl.ReferenceTransactionHash), nil); err != nil {
-			utils.Debug.Printf("[FlushMainCache] coin record not in leveldb")
+		// check whether we already updated this record
+		var cr *CoinRecord
+
+		// (1) get our coin record
+		// first check our map, in case we already updated the coin record given
+		// a previous coin
+		if cr2, ok := updatedCoinRecords[cl.ReferenceTransactionHash]; ok {
+			cr = cr2
 		} else {
-			pcr := &pro.CoinRecord{}
-			if err2 := proto.Unmarshal(data, pcr); err2 != nil {
-				utils.Debug.Printf("Failed to unmarshal record from hash {%v}:%v", cl.ReferenceTransactionHash, err2)
+			// if we haven't already update this coin record, retrieve from db
+			data, err := coinDB.db.Get([]byte(cl.ReferenceTransactionHash), nil)
+			if err != nil {
+				utils.Debug.Printf("[FlushMainCache] coin record not in leveldb")
 			}
-			cr := DecodeCoinRecord(pcr)
-			updatedCoinRecords[cl.ReferenceTransactionHash] = coinDB.removeCoinFromRecord(cr, cl.OutputIndex)
+			pcr := &pro.CoinRecord{}
+			if err = proto.Unmarshal(data, pcr); err != nil {
+				utils.Debug.Printf("Failed to unmarshal record from hash {%v}:%v", cl.ReferenceTransactionHash, err)
+			}
+			cr = DecodeCoinRecord(pcr)
 		}
+		// (2) remove the coin from the record if it's been spent
+		if coinDB.mainCache[cl].IsSpent {
+			cr = coinDB.removeCoinFromRecord(cr, cl.OutputIndex)
+		}
+		updatedCoinRecords[cl.ReferenceTransactionHash] = cr
 		delete(coinDB.mainCache, cl)
 	}
 	coinDB.mainCacheSize = 0
@@ -133,8 +139,8 @@ func (coinDB *CoinDatabase) FlushMainCache() {
 }
 
 // StoreBlock handles storing a newly minted Block. It:
-// (1) removes spent TransactionOutputs
-// (2) stores new TransactionOutputs as Coins in the mainCache
+// (1) removes spent TransactionOutputs (if active)
+// (2) stores new TransactionOutputs as Coins in the mainCache (if active)
 // (3) stores CoinRecords for the Transactions in the db.
 func (coinDB *CoinDatabase) StoreBlock(transactions []*block.Transaction, active bool) {
 	//TODO
@@ -182,7 +188,7 @@ func (coinDB *CoinDatabase) removeCoinFromRecord(cr *CoinRecord, outputIndex uin
 }
 
 // createCoinRecord returns a CoinRecord for the provided Transaction.
-func (coinDB *CoinDatabase) createCoinRecord(tx *block.Transaction, active bool) *CoinRecord {
+func (coinDB *CoinDatabase) createCoinRecord(tx *block.Transaction) *CoinRecord {
 	var outputIndexes []uint32
 	var amounts []uint32
 	var LockingScripts []string
@@ -192,7 +198,6 @@ func (coinDB *CoinDatabase) createCoinRecord(tx *block.Transaction, active bool)
 		LockingScripts = append(LockingScripts, txo.LockingScript)
 	}
 	cr := &CoinRecord{
-		Active:         active,
 		Version:        0,
 		OutputIndexes:  outputIndexes,
 		Amounts:        amounts,

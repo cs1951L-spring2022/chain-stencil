@@ -4,7 +4,6 @@ import (
 	"Chain/pkg/block"
 	"Chain/pkg/blockchain/chainwriter"
 	"Chain/pkg/blockchain/coindatabase"
-	"Chain/pkg/utils"
 	"reflect"
 	"testing"
 )
@@ -60,7 +59,7 @@ func TestUndoCoins(t *testing.T) {
 	}
 	// make sure coins from block are deleted
 	for _, tx := range block2.Transactions {
-		txHash := utils.Hash(tx)
+		txHash := tx.Hash()
 		for i := 0; i < len(tx.Outputs); i++ {
 			cl := coindatabase.CoinLocator{
 				ReferenceTransactionHash: txHash,
@@ -78,7 +77,7 @@ func TestGetCoin(t *testing.T) {
 	genBlock := GenesisBlock()
 	coinDB := coindatabase.New(coindatabase.DefaultConfig())
 	coinDB.StoreBlock(genBlock.Transactions, true)
-	txHash := utils.Hash(genBlock.Transactions[0])
+	txHash := genBlock.Transactions[0].Hash()
 	cl := coindatabase.CoinLocator{
 		ReferenceTransactionHash: txHash,
 		OutputIndex:              0,

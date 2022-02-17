@@ -6,7 +6,6 @@ import "Chain/pkg/pro"
 // have been spent. It is stored in the CoinDatabase's db.
 type CoinRecord struct {
 	Version        uint32
-	Active         bool
 	OutputIndexes  []uint32
 	Amounts        []uint32
 	LockingScripts []string
@@ -23,7 +22,6 @@ func EncodeCoinRecord(cr *CoinRecord) *pro.CoinRecord {
 		lockingScripts = append(lockingScripts, cr.LockingScripts[i])
 	}
 	return &pro.CoinRecord{
-		Active:         cr.Active,
 		Version:        cr.Version,
 		OutputIndexes:  outputIndexes,
 		Amounts:        amounts,
@@ -42,7 +40,6 @@ func DecodeCoinRecord(pcr *pro.CoinRecord) *CoinRecord {
 		lockingScripts = append(lockingScripts, pcr.GetLockingScripts()[i])
 	}
 	return &CoinRecord{
-		Active:         pcr.GetActive(),
 		Version:        pcr.GetVersion(),
 		OutputIndexes:  outputIndexes,
 		Amounts:        amounts,

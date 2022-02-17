@@ -1,6 +1,11 @@
 package block
 
-import "Chain/pkg/pro"
+import (
+	"Chain/pkg/pro"
+	"crypto/sha256"
+	"fmt"
+	"google.golang.org/protobuf/proto"
+)
 
 // Header provides information about the Block.
 // Version is the Block's version.
@@ -70,4 +75,16 @@ func DecodeBlock(pb *pro.Block) *Block {
 		Header:       DecodeHeader(pb.GetHeader()),
 		Transactions: txs,
 	}
+}
+
+// Hash returns the hash of the block (which is done via the header)
+func (block *Block) Hash() string {
+	h := sha256.New()
+	pb := EncodeHeader(block.Header)
+	bytes, err := proto.Marshal(pb)
+	if err != nil {
+		fmt.Errorf("[block.Hash()] Unable to marshal block")
+	}
+	h.Write(bytes)
+	return fmt.Sprintf("%x", h.Sum(nil))
 }
